@@ -1,0 +1,37 @@
+{
+  "name": "swagger-mock",
+  "version": "0.0.1",
+  "description": "Swagger Mock Server",
+  "keywords": [
+    "server",
+    "mock",
+    "fake",
+    "stub",
+    "test",
+    "rest",
+    "api",
+    "json",
+    "spec",
+    "specification",
+    "contract"
+  ],
+  "author": {
+    "name": "Juan Manuel Lopez",
+    "email": "tandiljuan@gmail.com"
+  },
+  "license": "MIT",
+  "scripts": {
+    "server": "DEBUG=swagger:* node server.js",
+    "validate": "node_modules/swagger-tools/bin/swagger-tools validate swagger.yaml"
+  },
+  "repository": {
+  },
+  "dependencies": {
+    "swagger-server": "^0.0.8",
+    "swagger-tools": "^0.8.1",
+    "json-schema-faker": "^0.1.5",
+    "yamljs": "^0.2.1"
+  },
+  "devDependencies": {
+  }
+}

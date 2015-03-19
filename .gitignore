@@ -1,0 +1,16 @@
+# IDE / Text Editors backup files #
+###################################
+*.swp
+*.swo
+*~
+
+# OS generated files #
+######################
+.DS_Store?
+ehthumbs.db
+Icon?
+Thumbs.db
+
+# Project files/folders #
+#########################
+node_modules
