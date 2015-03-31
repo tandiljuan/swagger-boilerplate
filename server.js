@@ -74,6 +74,33 @@ function clone(obj) {
   return JSON.parse(JSON.stringify(obj));
 }
 
+/**
+ * Recursively merge properties of two objects
+ * @see [How can I merge properties of two JavaScript objects dynamically?](http://stackoverflow.com/a/383245)
+ */
+function merge(obj1, obj2) {
+
+  for (var p in obj2) {
+    try {
+
+      // Property in destination object set; update its value.
+      if (obj2[p].constructor == Object) {
+        obj1[p] = merge(obj1[p], obj2[p]);
+      } else {
+        obj1[p] = obj2[p];
+      }
+
+    } catch(e) {
+
+      // Property in destination object not set; create it and set its value.
+      obj1[p] = obj2[p];
+
+    }
+  }
+
+  return obj1;
+}
+
 // http://blog.tompawlak.org/how-to-generate-random-values-nodejs-javascript
 function randomIntInc(low, high) {
   return Math.floor(Math.random() * (high - low + 1) + low);
