@@ -27,6 +27,9 @@
   "repository": {
   },
   "dependencies": {
+    "express": "^4.12.3",
+    "swagger-ui": "^2.1.8-M1",
+    "json-refs": "^0.1.6",
     "swagger-server": "^0.0.8",
     "swagger-tools": "^0.8.1",
     "json-schema-faker": "^0.1.5",

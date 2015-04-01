@@ -15,21 +15,12 @@
 //     return (new Date().toISOString().split("T")[0]);
 // });
 
+var SWAGGER_UI_PORT = '9090',
+    SWAGGER_SERVER_PORT = '8090';
+
 var path = require('path'),
     swaggerServer = require('swagger-server'),
-    server = swaggerServer(path.join(__dirname, 'swagger.yaml')),
-    YAML = require('yamljs'),
-    fs = require('fs'),
-    yamlString = null;
-
-// Load Swagger YAML file
-fs.readFile('swagger.yaml', function (err, data) {
-  if (err) {
-    throw err;
-  }
-
-  yamlString = data.toString();
-});
+    server = swaggerServer(path.join(__dirname, 'swagger.yaml'));
 
 // Enable CORS
 //
@@ -116,11 +107,101 @@ function randomIntInc(low, high) {
 //                                    __/ |
 //                                   |___/
 
-server.get('/api-docs/swagger.json', function(req, res, next) {
-  var nativeObject = YAML.parse(yamlString);
-  res.send(nativeObject);
-  //res.send(req.swagger.swaggerObject);
+
+//  ____
+// / ___|  ___ _ ____   _____ _ __
+// \___ \ / _ \ '__\ \ / / _ \ '__|
+//  ___) |  __/ |   \ V /  __/ |
+// |____/ \___|_|    \_/ \___|_|
+
+/**
+ * Create another Express server to handle Swagger-UI
+ * in a different port.
+ *
+ * @see [How can I configure expressjs to handle both http and https?](http://stackoverflow.com/a/11035677)
+ * @see [Serving files from multiple directories](http://expressjs.com/4x/api.html#router.use)
+ * @see [Render basic HTML view in Node JS Express?](http://stackoverflow.com/a/6437629)
+ */
+var http = require('http'),
+    express = require('express'),
+    app = express(),
+    jsRefs = require('json-refs'),
+    YAML = require('yamljs'),
+    fs = require('fs');
+
+app.get('/', function(req, res, next) {
+  res.redirect('/api-docs');
 });
 
-// Server Start
-server.listen('8090');
+app.use(express.static(__dirname + '/node_modules/swagger-ui/dist/'));
+app.use(express.static(__dirname + '/node_modules/swagger-ui/dist/css'));
+app.use(express.static(__dirname + '/node_modules/swagger-ui/dist/fonts'));
+app.use(express.static(__dirname + '/node_modules/swagger-ui/dist/images'));
+app.use(express.static(__dirname + '/node_modules/swagger-ui/dist/lib'));
+
+app.get('/api-docs', function(req, res, next) {
+  fs.readFile(__dirname + '/node_modules/swagger-ui/dist/index.html', 'utf8', function(err, text){
+      text = text.replace(
+          'url = "http://petstore.swagger.io/v2/swagger.json";',
+          'url = "http://' + req.hostname + ':' + SWAGGER_UI_PORT + '/api-docs/swagger.json";'
+          );
+      res.send(text);
+  });
+});
+
+app.get('/api-docs/swagger.json', function(req, res, next) {
+
+  // Load Swagger YAML file
+  fs.readFile('swagger.yaml', function (err, data) {
+
+    if (err) throw err;
+
+    // Parse YAML and get JSON
+    var nativeObject = YAML.parse(data.toString()),
+        // Temporal `definitions` object
+        definitions = {};
+
+    // Iterate `definitions` objects to clean `allOf` references
+    for (var key in nativeObject.definitions) {
+
+        // Ignore object without `allOf` references
+        if (nativeObject.definitions[key].allOf === undefined) {
+          definitions[key] = nativeObject.definitions[key];
+          continue;
+        }
+
+        // Process `allOf` references and combine them
+        var object = {};
+        for (var i in nativeObject.definitions[key].allOf) {
+
+          var path = jsRefs.pathFromPointer(nativeObject.definitions[key].allOf[i]['$ref']),
+              object2 = nativeObject;
+
+          // Get object from reference
+          for (var j in path) {
+            object2 = object2[path[j]];
+          }
+
+          // Combine referenced objects
+          object = merge(object, object2);
+        }
+
+        definitions[key] = object;
+    }
+
+    // Replace `definitions` with processed objects
+    nativeObject.definitions = definitions;
+
+    // Replace Host
+    nativeObject.host =  req.hostname + ':' + SWAGGER_SERVER_PORT;
+
+    // Replace Schemes
+    nativeObject.schemes = ['http']
+
+    res.send(nativeObject);
+  });
+});
+
+// Servers Start
+http.createServer(app).listen(SWAGGER_UI_PORT);
+server.listen(SWAGGER_SERVER_PORT);
