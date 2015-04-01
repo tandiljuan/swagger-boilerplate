@@ -16,17 +16,6 @@ basePath: /v1
 produces:
   - application/json
 paths:
-  /api-docs/swagger.json:
-    get:
-      description: Get the API documentation JSON
-      operationId: getAPIDocs
-      responses:
-        200:
-          description: Swagger JSON
-        default:
-          description: unexpected error
-          schema:
-            $ref: '#/definitions/Error'
   /products:
     get:
       summary: Product Types
